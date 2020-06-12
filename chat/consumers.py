@@ -4,7 +4,7 @@ from asgiref.sync import async_to_sync
 
 
 class Consumer(WebsocketConsumer):
-
+# function for connecting the user
     def connect(self):
         self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -22,8 +22,7 @@ class Consumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
-        print(data['user'])
-        print(data['message'])
+        # send message to the room
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
