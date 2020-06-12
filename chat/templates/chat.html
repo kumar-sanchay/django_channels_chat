@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+</head>
+<body>
+    <form method="post" action="#" id="send_message">
+        <input type="text" id="msg">
+        <input type="submit" value="Send">
+    </form>
+
+    <div>
+        <h3>Message</h3>
+        <p id="msg_log"></p>
+    </div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+
+<script>
+    var csrftoken = Cookies.get('csrftoken');
+    console.log(csrftoken);
+            function csrfSafeMethod(method){
+                return (/^(GET|HEAD|TRACE|OPTIONS)$/).test(method);
+            }
+
+            $.ajaxSetup({
+                beforeSend : function(xhr, settings){
+                    if(!csrfSafeMethod(settings.type) && !this.crossDomain){
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+
+    $(document).ready(function(){
+
+        var protocol = window.location.protocol;
+        ws_protocol = "ws://";
+        if(protocol=="wss://"){
+            ws_protocol = "wss://";
+        }
+
+        web_socket_url = ws_protocol + window.location.host + window.location.pathname;
+
+    	const web_socket = new WebSocket(web_socket_url);
+
+		web_socket.onopen = function(e){
+			console.log("open", e);
+		}
+
+		web_socket.onerror = function(e){
+			console.log("error", e);
+		}
+
+        web_socket.onmessage = function(e){
+            console.log("message", e);
+            var data = JSON.parse(e.data);
+            if('{{ request.user.username }}' == data['user'])
+                $('#msg_log').append('<br>Me : '+data['message']);
+            else
+                $('#msg_log').append('<br>'+data['user']+' : '+data['message']);
+        }
+
+        $('form#send_message').submit(function(event){
+            event.preventDefault();
+            console.log('here');
+            web_socket.send(JSON.stringify({
+            'user': '{{ request.user.username }}',
+            'message': $('#msg').val()
+            }));
+            return false;
+        });
+    });
+
+</script>
+
+</html>
